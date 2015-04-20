@@ -1,2 +1,6 @@
-# IoB-Devices
-University of Muenster --- Course: Internet of Bicycles --- Sommer term 2015 --- #Devices
+# Internet of Bicycles (#Devices)
+
+**University of Muenster**
+* Institute for Geoinformatics
+* Course: Internet of Bicycles
+* Sommer term 2015 
