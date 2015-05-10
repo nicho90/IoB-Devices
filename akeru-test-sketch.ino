@@ -1,5 +1,10 @@
 #include <SoftwareSerial.h>
 #include <Akeru.h>
+
+/* 
+ * Akeru Libary at: http://snootlab.com/lang-en/shields-snootlab/547-akeru-beta-32-fr.html
+ * or at: https://github.com/hackerspacesg/SIGFOX
+ */
  
 // Initialize the modem:
 void setup() {
