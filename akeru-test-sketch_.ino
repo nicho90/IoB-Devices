@@ -22,9 +22,8 @@ void setup() {
 }
 
 typedef struct {
-  char user;
-  int currentDate;
-  int currentTime;
+  int lat;
+  int lon;
   int counter;
 } Payload;
 
@@ -34,9 +33,8 @@ void loop() {
  Payload p;
  
  p.counter = 0;
- p.user = 'n';
- p.currentDate = 20150510;
- p.currentTime = 1941;
+ p.lat = 51;
+ p.lon = 7;
   
    if(!Akeru.isReady()) {
       Serial.println("Modem not ready");
@@ -47,6 +45,9 @@ void loop() {
       
       if (p.counter==0) {
         // Send data:
+        Serial.println(sizeof(p.lat));
+        Serial.println(sizeof(p.lon));
+        Serial.println(sizeof(p));
         Akeru.send(&p, sizeof(p));
         Serial.println("Message sent");
         delay(1000);
