@@ -4,6 +4,7 @@ The information are processed through the TinyGPS library and logged to the cons
 **/
 
 #include <SoftwareSerial.h>
+#include <Akeru.h>
 #include <TinyGPS.h>
 
 TinyGPS gps;
@@ -14,13 +15,26 @@ void setup()
   ss.begin(9600);
   Serial.begin(9600);
   Serial.print("Finished setup");
+
+	// Wait 1 second for the modem to warm up
+  delay(1000);
+
+  // Init modem
+  Akeru.begin();
 }
+
+typedef struct {
+	bool theftprotection;
+  float lat;
+  float lng;
+} Payload;
 
 void loop()
 { 
   bool newData = false;
   unsigned long chars;
   unsigned short sentences, failed;
+	Payload p;
  
   // parse GPS data for one second and report some key values
   for (unsigned long start = millis(); millis() - start < 1000;)
@@ -52,5 +66,25 @@ void loop()
     Serial.print("Speed = ");
     Serial.println(gps.f_speed_kmph());
     newData = false;
+
+		p.theftprotection = true;
+		p.lat = flat;
+		p.lng = flon;
+
+		if(!Akeru.isReady()) {
+      Serial.println("Modem not ready");
+      delay(1000);
+    } else {
+      Serial.println("Modem ready");
+      delay(1000);
+      
+			Serial.println(sizeof(p.lat));
+      Serial.println(sizeof(p.lng));
+      Serial.println(sizeof(p.theftprotection));
+      Serial.println(sizeof(p));
+      Akeru.send(&p, sizeof(p));
+      Serial.println("Message sent");
+      delay(1000); 
+   }
   }
 }
