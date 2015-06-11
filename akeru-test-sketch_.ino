@@ -1,6 +1,6 @@
 /**
 Arduino GPS Client to retrieve the Location data from the GPS shield.
-The information are processed through the TinyGPS library and logged to the console
+The information are processed through the TinyGPS library and send via the Akeru
 **/
 
 #include <SoftwareSerial.h>
@@ -8,23 +8,18 @@ The information are processed through the TinyGPS library and logged to the cons
 #include <TinyGPS.h>
 
 TinyGPS gps;
-SoftwareSerial ss(0,1);
+// Akeru uses RX=5, TX=4
+SoftwareSerial ssAkeru(5,4);
+SoftwareSerial ss(6,7);
 
 void setup()
-{
-  ss.begin(9600);
+{  
   Serial.begin(9600);
   Serial.print("Finished setup");
-
-	// Wait 1 second for the modem to warm up
-  delay(1000);
-
-  // Init modem
-  Akeru.begin();
 }
 
 typedef struct {
-	bool theftprotection;
+  bool theftprotection;
   float lat;
   float lng;
 } Payload;
@@ -36,6 +31,9 @@ void loop()
   unsigned short sentences, failed;
 	Payload p;
  
+  // start gps listening
+  ss.begin(9600);
+  
   // parse GPS data for one second and report some key values
   for (unsigned long start = millis(); millis() - start < 1000;)
   {
@@ -48,6 +46,8 @@ void loop()
         newData = true;
     }
   }
+  // end gps in order to make port listening for akeru available
+  ss.end();
     
     if (newData)
   {
@@ -59,32 +59,29 @@ void loop()
     Serial.println(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
     Serial.print("LON = ");
     Serial.println(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
-    Serial.print("HDOP = ");
-    Serial.println(gps.hdop()/100.0);
-    Serial.print("SAT = ");
-    Serial.println(gps.satellites());
-    Serial.print("Speed = ");
-    Serial.println(gps.f_speed_kmph());
     newData = false;
 
-		p.theftprotection = true;
-		p.lat = flat;
-		p.lng = flon;
+    p.theftprotection = true;
+    p.lat = flat;
+    p.lng = flon;
 
-		if(!Akeru.isReady()) {
+    // Init modem
+    Akeru.begin();
+    // Wait 1 second for the modem to warm up
+    delay(1000);
+    
+    if(!Akeru.isReady()) {
       Serial.println("Modem not ready");
       delay(1000);
     } else {
       Serial.println("Modem ready");
       delay(1000);
       
-			Serial.println(sizeof(p.lat));
-      Serial.println(sizeof(p.lng));
-      Serial.println(sizeof(p.theftprotection));
-      Serial.println(sizeof(p));
       Akeru.send(&p, sizeof(p));
       Serial.println("Message sent");
       delay(1000); 
-   }
+    }
+    // end modem in order to make port listening for gps available
+    ssAkeru.end();
   }
 }
