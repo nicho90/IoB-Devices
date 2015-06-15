@@ -70,16 +70,20 @@ void loop()
     // Wait 1 second for the modem to warm up
     delay(1000);
     
-    if(!Akeru.isReady()) {
+    if(!Akeru.isReady()){
       Serial.println("Modem not ready");
       delay(1000);
-    } else {
-      Serial.println("Modem ready");
+    } else if(
+      p.lat != TinyGPS::GPS_INVALID_F_ANGLE &&
+      p.lng != TinyGPS::GPS_INVALID_F_ANGLE) {
+      Serial.println("Modem ready and coordinates valid");
       delay(1000);
       
       Akeru.send(&p, sizeof(p));
       Serial.println("Message sent");
       delay(1000); 
+    } else {
+      Serial.println("Coordinates not valid");
     }
     // end modem in order to make port listening for gps available
     ssAkeru.end();
