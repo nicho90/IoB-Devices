@@ -64,28 +64,25 @@ void loop()
     p.theftprotection = true;
     p.lat = flat;
     p.lng = flon;
-
-    // Init modem
-    Akeru.begin();
-    // Wait 1 second for the modem to warm up
-    delay(1000);
     
-    if(!Akeru.isReady()){
-      Serial.println("Modem not ready");
+    if(p.lat != TinyGPS::GPS_INVALID_F_ANGLE &&
+      p.lng != TinyGPS::GPS_INVALID_F_ANGLE){
+      // Init modem
+      Akeru.begin();
+      // Wait 1 second for the modem to warm up
       delay(1000);
-    } else if(
-      p.lat != TinyGPS::GPS_INVALID_F_ANGLE &&
-      p.lng != TinyGPS::GPS_INVALID_F_ANGLE) {
-      Serial.println("Modem ready and coordinates valid");
+      if(!Akeru.isReady()){
+        Serial.println("Modem not ready");
+      } else {
+        delay(1000);
+        Akeru.send(&p, sizeof(p));
+        Serial.println("Message sent");
+      }
+      // end modem to make port listening for gps available
+      ssAkeru.end();
       delay(1000);
-      
-      Akeru.send(&p, sizeof(p));
-      Serial.println("Message sent");
-      delay(1000); 
     } else {
-      Serial.println("Coordinates not valid");
+        Serial.println("Coordinates not valid");
     }
-    // end modem in order to make port listening for gps available
-    ssAkeru.end();
   }
 }
