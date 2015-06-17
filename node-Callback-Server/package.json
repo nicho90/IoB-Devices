@@ -1,0 +1,16 @@
+{
+  "name": "iob",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "body-parser": "~1.0.0",
+    "cookie-parser": "~1.0.1",
+    "debug": "^0.7.4",
+    "express": "~4.2.0",
+    "install": "^0.1.8",
+    "morgan": "~1.0.0",
+    "npm": "^2.11.2",
+    "pg": "^4.4.0",
+    "underscore": "^1.6.0"
+  }
+}
