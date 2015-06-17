@@ -20,14 +20,15 @@ SoftwareSerial ss(6,7);
 void setup()
 {  
   Serial.begin(9600);
-  Serial.print("Finished setup");
+  Serial.print("Finished setup\n");
 }
 
 typedef struct {
+  int mode;
   bool theftprotection;
   float lat;
   float lng;
-  float temperature;
+ // float temperature;
 } Payload;
 
 void loop()
@@ -73,11 +74,12 @@ void loop()
     Serial.print("temperature = ");
     Serial.print(DHT.temperature); 
     Serial.println("C  ");
-
+  
+    p.mode = 1;
     p.theftprotection = true;
     p.lat = flat;
     p.lng = flon;
-    p.temperature = DHT.temperature;
+    //p.temperature = DHT.temperature;
     
     // IF FLOAT is to long for SigFox-Message
     //int temp = (int) DHT.temperature;
@@ -102,11 +104,25 @@ void loop()
         Serial.println(sizeof(p));
         Akeru.send(&p, sizeof(p));
         Serial.println("Message sent");
+        delay(1000);
       }
       
-      delay(1000);
     }
     // end modem in order to make port listening for gps available
     ssAkeru.end();
+  } else {
+    
+    Serial.print("No GPS data\n");
+    Serial.print("LAT = 0.00000\n");  
+    Serial.print("LON = 0.00000\n");  
+    DHT.read11(dht_dpin);
+    Serial.print("Humidity = ");
+    Serial.print(DHT.humidity);
+    Serial.print("%  ");
+    Serial.print("temperature = ");
+    Serial.print(DHT.temperature); 
+    Serial.println("C\n");
+    
+    delay(1000);
   }
 }
