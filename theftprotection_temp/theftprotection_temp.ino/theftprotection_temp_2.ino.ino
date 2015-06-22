@@ -24,7 +24,6 @@ void setup()
 }
 
 typedef struct {
-  int mode;
   bool theftprotection;
   float lat;
   float lng;
@@ -75,17 +74,11 @@ void loop()
     Serial.print(DHT.temperature); 
     Serial.println("C  ");
   
-    p.mode = 1;
     p.theftprotection = true;
     p.lat = flat;
     p.lng = flon;
     //p.temperature = DHT.temperature;
     
-    // IF FLOAT is to long for SigFox-Message
-    //int temp = (int) DHT.temperature;
-    //Serial.print("int temperature = ");
-    //Serial.print(temp); 
-    //Serial.println("C  ");
 
     // INIT MODEM
     Akeru.begin();
@@ -101,9 +94,10 @@ void loop()
       if(p.lat == 0 || p.lng == 0) {
         Serial.println("Unknown position");
       } else {
+        Serial.println("Message-Size: ");
         Serial.println(sizeof(p));
         Akeru.send(&p, sizeof(p));
-        Serial.println("Message sent");
+        Serial.println("Message sent!");
         delay(1000);
       }
       
@@ -112,6 +106,7 @@ void loop()
     ssAkeru.end();
   } else {
     
+    Serial.print("Theft-Protection: 1\n");
     Serial.print("No GPS data\n");
     Serial.print("LAT = 0.00000\n");  
     Serial.print("LON = 0.00000\n");  
