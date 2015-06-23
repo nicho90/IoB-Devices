@@ -9,7 +9,7 @@ The information are processed through the TinyGPS library and send via the Akeru
 #include <dht.h>
 
 // Pin analog 0 for temp/humidity sensor
-#define dht_dpin A0 
+#define dht_dpin A0
 dht DHT;
 
 TinyGPS gps;
@@ -18,7 +18,7 @@ SoftwareSerial ssAkeru(5,4);
 SoftwareSerial ss(6,7);
 
 void setup()
-{  
+{
   Serial.begin(9600);
   Serial.print("Finished setup\n");
 }
@@ -27,18 +27,18 @@ typedef struct {
   bool theftprotection;
   float lat;
   float lng;
- // float temperature;
+  int temperature;
 } Payload;
 
 void loop()
-{ 
+{
   bool newData = false;
   unsigned long chars;
   unsigned short sentences, failed;
 	Payload p;
- 
+
  ss.begin(9600);
-  
+
   // PARSE GPS data for one second and report some key values
   for (unsigned long start = millis(); millis() - start < 1000;)
   {
@@ -52,44 +52,44 @@ void loop()
   }
   // end gps in order to make port listening for akeru available
   ss.end();
-    
+
   if (newData)
   {
     // IF NEW GPS-DATA
     float flat, flon;
     unsigned long age;
     gps.f_get_position(&flat, &flon, &age);
-    Serial.println("");      
-    Serial.print("LAT = ");  
+    Serial.println("");
+    Serial.print("LAT = ");
     Serial.println(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
     Serial.print("LON = ");
     Serial.println(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
     newData = false;
-    
+
     DHT.read11(dht_dpin);
     Serial.print("Humidity = ");
     Serial.print(DHT.humidity);
     Serial.print("%  ");
     Serial.print("temperature = ");
-    Serial.print(DHT.temperature); 
+    Serial.print(DHT.temperature);
     Serial.println("C  ");
-  
+
     p.theftprotection = true;
     p.lat = flat;
     p.lng = flon;
-    //p.temperature = DHT.temperature;
-    
+    p.temperature = (int)DHT.temperature;
+
 
     // INIT MODEM
     Akeru.begin();
     // Wait 1 second for the modem to warm up
     delay(1000);
-    
+
     if(!Akeru.isReady()) {
       Serial.println("Modem not ready");
     } else {
       Serial.println("Modem ready");
-      
+
       // CHECK IF LNG/LAT != 0
       if(p.lat == 0 || p.lng == 0) {
         Serial.println("Unknown position");
@@ -100,24 +100,24 @@ void loop()
         Serial.println("Message sent!");
         delay(1000);
       }
-      
+
     }
     // end modem in order to make port listening for gps available
     ssAkeru.end();
   } else {
-    
+
     Serial.print("Theft-Protection: 1\n");
     Serial.print("No GPS data\n");
-    Serial.print("LAT = 0.00000\n");  
-    Serial.print("LON = 0.00000\n");  
+    Serial.print("LAT = 0.00000\n");
+    Serial.print("LON = 0.00000\n");
     DHT.read11(dht_dpin);
     Serial.print("Humidity = ");
     Serial.print(DHT.humidity);
     Serial.print("%  ");
     Serial.print("temperature = ");
-    Serial.print(DHT.temperature); 
+    Serial.print(DHT.temperature);
     Serial.println("C\n");
-    
+
     delay(1000);
   }
 }
