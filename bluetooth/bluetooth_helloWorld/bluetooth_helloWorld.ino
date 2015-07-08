@@ -19,11 +19,6 @@
  * SOFTWARE.
  */
 
-/**
-Arduino GPS Client to retrieve the Location data from the GPS shield.
-The information are processed through the TinyGPS library and send via the Akeru.
-**/
-
 #include <SPI.h>
 #include <EEPROM.h>
 #include <lib_aci.h>
@@ -147,7 +142,7 @@ void setup(void)
   Tell the ACI library, the MCU to nRF8001 pin connections.
   The Active pin is optional and can be marked UNUSED
   */
-  aci_state.aci_pins.board_name = REDBEARLAB_SHIELD_V2; //See board.h for details REDBEARLAB_SHIELD_V1_1 or BOARD_DEFAULT
+  aci_state.aci_pins.board_name = BOARD_DEFAULT; //See board.h for details REDBEARLAB_SHIELD_V1_1 or BOARD_DEFAULT
   aci_state.aci_pins.reqn_pin   = 9; //SS for Nordic board, 9 for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.rdyn_pin   = 8; //3 for Nordic board, 8 for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.mosi_pin   = MOSI;
@@ -157,7 +152,7 @@ void setup(void)
   aci_state.aci_pins.spi_clock_divider      = SPI_CLOCK_DIV8;//SPI_CLOCK_DIV8  = 2MHz SPI speed
                                                              //SPI_CLOCK_DIV16 = 1MHz SPI speed
   
-  aci_state.aci_pins.reset_pin              = UNUSED; //4 for Nordic board, UNUSED for REDBEARLAB_SHIELD_V1_1
+  aci_state.aci_pins.reset_pin              = 4; //4 for Nordic board, UNUSED for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.active_pin             = UNUSED;
   aci_state.aci_pins.optional_chip_sel_pin  = UNUSED;
 
@@ -382,10 +377,27 @@ void aci_loop()
 
         if (PIPE_UART_OVER_BTLE_UART_RX_RX == aci_evt->params.data_received.rx_data.pipe_number)
           {
-
             Serial.print(F(" Data(Hex) : "));
+            
+//Switch statement to parse app messages
+              switch(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]) {
+                case 49:
+                Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
+                Serial.println("Theft-Protection is on");
+                break;
+                case 48:
+                Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
+                Serial.println("Theft-Protection is off");
+                break;
+                default:
+                Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
+                Serial.println("Last char unknown command");
+              }
+            
+             //Print message:             
             for(int i=0; i<aci_evt->len - 2; i++)
             {
+              
               Serial.print((char)aci_evt->params.data_received.rx_data.aci_data[i]);
               uart_buffer[i] = aci_evt->params.data_received.rx_data.aci_data[i];
               Serial.print(F(" "));
