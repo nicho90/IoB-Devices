@@ -1,24 +1,13 @@
-/* Copyright (c) 2014, Nordic Semiconductor ASA
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+/**
+Arduino GPS Client to retrieve the Location data from the GPS shield.
+The information are processed through the TinyGPS library and send via the Akeru
+**/
 
+#include <SoftwareSerial.h>
+#include <Akeru.h>
+#include <TinyGPS.h>
+#include <DHT.h>
+/** Bluetooth libraries: **/
 #include <SPI.h>
 #include <EEPROM.h>
 #include <lib_aci.h>
@@ -34,7 +23,6 @@ Include the services_lock.h to put the setup in the OTP memory of the nRF8001.
 This would mean that the setup cannot be changed once put in.
 However this removes the need to do the setup of the nRF8001 on every reset.
 */
-
 
 #ifdef SERVICES_PIPE_TYPE_MAPPING_CONTENT
     static services_pipe_type_mapping_t
@@ -107,26 +95,27 @@ In the master control panel, clicking Enable Services will open all the pipes on
 
 The ACI Evt Data Credit provides the radio level ack of a transmitted packet.
 */
-void setup(void)
-{
-  Serial.begin(9600);
-  //Wait until the serial port is available (useful only for the Leonardo)
-  //As the Leonardo board is not reseted every time you open the Serial Monitor
-  #if defined (__AVR_ATmega32U4__)
-    while(!Serial)
-    {}
-    delay(5000);  //5 seconds delay for enabling to see the start up comments on the serial board
-  #elif defined(__PIC32MX__)
-    delay(1000);
-  #endif
 
+// Pin analog 0 for temp/humidity sensor
+//#define dht_dpin A0 
+//#define DHTTYPE DHT11
+//DHT dht(dht_dpin, DHTTYPE);
+
+bool ftheftprotection = false;
+
+TinyGPS gps;
+// Akeru uses RX=5, TX=4
+SoftwareSerial ssAkeru(5,4);
+SoftwareSerial ss(2,3);
+SoftwareSerial ssBluetooth(6,7);
+
+void setup(void)
+{  
+  Serial.begin(9600);
   Serial.println(F("Arduino setup"));
   Serial.println(F("Set line ending to newline to send data from the serial monitor"));
-
-  /**
-  Point ACI data structures to the the setup data that the nRFgo studio generated for the nRF8001
-  */
-  if (NULL != services_pipe_type_mapping)
+  
+    if (NULL != services_pipe_type_mapping)
   {
     aci_state.aci_setup_info.services_pipe_type_mapping = &services_pipe_type_mapping[0];
   }
@@ -142,7 +131,7 @@ void setup(void)
   Tell the ACI library, the MCU to nRF8001 pin connections.
   The Active pin is optional and can be marked UNUSED
   */
-  aci_state.aci_pins.board_name = BOARD_DEFAULT; //See board.h for details REDBEARLAB_SHIELD_V1_1 or BOARD_DEFAULT
+  aci_state.aci_pins.board_name = REDBEARLAB_SHIELD_V1_1; //See board.h for details REDBEARLAB_SHIELD_V1_1 or BOARD_DEFAULT
   aci_state.aci_pins.reqn_pin   = 9; //SS for Nordic board, 9 for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.rdyn_pin   = 8; //3 for Nordic board, 8 for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.mosi_pin   = MOSI;
@@ -152,7 +141,7 @@ void setup(void)
   aci_state.aci_pins.spi_clock_divider      = SPI_CLOCK_DIV8;//SPI_CLOCK_DIV8  = 2MHz SPI speed
                                                              //SPI_CLOCK_DIV16 = 1MHz SPI speed
   
-  aci_state.aci_pins.reset_pin              = 4; //4 for Nordic board, UNUSED for REDBEARLAB_SHIELD_V1_1
+  aci_state.aci_pins.reset_pin              = UNUSED; //4 for Nordic board, UNUSED for REDBEARLAB_SHIELD_V1_1
   aci_state.aci_pins.active_pin             = UNUSED;
   aci_state.aci_pins.optional_chip_sel_pin  = UNUSED;
 
@@ -377,27 +366,30 @@ void aci_loop()
 
         if (PIPE_UART_OVER_BTLE_UART_RX_RX == aci_evt->params.data_received.rx_data.pipe_number)
           {
+
             Serial.print(F(" Data(Hex) : "));
             
-//Switch statement to parse app messages
+            //Switch statement to parse app messages
               switch(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]) {
                 case 49:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Theft-Protection is on");
+                ftheftprotection = true;
                 break;
                 case 48:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Theft-Protection is off");
+                ftheftprotection = false;
                 break;
                 default:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Last char unknown command");
               }
             
-             //Print message:             
+             //Print message:          
+            
             for(int i=0; i<aci_evt->len - 2; i++)
             {
-              
               Serial.print((char)aci_evt->params.data_received.rx_data.aci_data[i]);
               uart_buffer[i] = aci_evt->params.data_received.rx_data.aci_data[i];
               Serial.print(F(" "));
@@ -484,30 +476,48 @@ void aci_loop()
 bool stringComplete = false;  // whether the string is complete
 uint8_t stringIndex = 0;      //Initialize the index to store incoming chars
 
-void loop() {
+// End of Bluetooth setup
 
+typedef struct {
+  int mode;
+  bool theftprotection;
+  float lat;
+  float lng;
+  //float temperature;
+} Payload;
+
+void loop()
+{ 
+ 
+  ssBluetooth.begin(9600);
+  bool newData = false;
+  unsigned long chars;
+  unsigned short sentences, failed;
+  Payload p;
+  
+  //Read Bluetooth
   //Process any ACI commands or events
   aci_loop();
-
+  
   // print the string when a newline arrives:
   if (stringComplete) 
   {
     Serial.print(F("Sending: "));
     Serial.println((char *)&uart_buffer[0]);
-
+  
     uart_buffer_len = stringIndex + 1;
-
+  
     if (!lib_aci_send_data(PIPE_UART_OVER_BTLE_UART_TX_TX, uart_buffer, uart_buffer_len))
     {
       Serial.println(F("Serial input dropped"));
     }
-
+  
     // clear the uart_buffer:
     for (stringIndex = 0; stringIndex < 20; stringIndex++)
     {
       uart_buffer[stringIndex] = ' ';
     }
-
+  
     // reset the flag and the index in order to receive more data
     stringIndex    = 0;
     stringComplete = false;
@@ -519,6 +529,116 @@ void loop() {
       serialEvent();
     }
   #endif
+ 
+ ssBluetooth.end();
+ ss.begin(9600);
+  
+  // PARSE GPS data for one second and report some key values
+  for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (ss.available())
+    {
+      char c = ss.read();
+      //Serial.print(c); //uncomment to see the full NMEA datasets
+      if (gps.encode(c)) // Did a new valid sentence come in?
+        newData = true;
+    }
+  }
+  // end gps in order to make port listening for akeru available
+  ss.end();
+    
+  if (newData)
+  {
+    // IF NEW GPS-DATA
+    float flat, flon;
+    unsigned long age;
+    gps.f_get_position(&flat, &flon, &age);
+    Serial.println("");      
+    Serial.print("LAT = ");  
+    Serial.println(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+    Serial.print("LON = ");
+    Serial.println(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+    newData = false;
+    
+    // Read DHT sensor; temperature disabled right now
+    //float humi = dht.readHumidity();
+    //float temp = dht.readTemperature();
+    
+    // check if returns are valid, if they are NaN (not a number) then something went wrong!
+//    if (isnan(temp) || isnan(humi)) 
+//    {
+//        Serial.println("Failed to read from DHT");
+//    } 
+//    else 
+//    {
+//        Serial.print("Humidity: "); 
+//        Serial.print(humi);
+//        Serial.print(" %\t");
+//        Serial.print("Temperature: "); 
+//        Serial.print(temp);
+//        Serial.println(" *C");
+//    }
+    
+    p.mode = 1;
+    p.theftprotection = ftheftprotection;
+    p.lat = flat;
+    p.lng = flon;
+    //p.temperature = temp;
+    
+    // IF FLOAT is to long for SigFox-Message
+    //int temp = (int) DHT.temperature;
+    //Serial.print("int temperature = ");
+    //Serial.print(temp); 
+    //Serial.println("C  ");
+
+    // INIT MODEM
+    Akeru.begin();
+    // Wait 1 second for the modem to warm up
+    delay(1000);
+    
+    if(!Akeru.isReady()) {
+      Serial.println("Modem not ready");
+    } else {
+      Serial.println("Modem ready");
+      
+      // CHECK IF LNG/LAT != 0
+      if(p.lat == 0 || p.lng == 0) {
+        Serial.println("Unknown position");
+      } else {
+        Serial.println(sizeof(p));
+        Akeru.send(&p, sizeof(p));
+        Serial.println("Message sent");
+        delay(1000);
+      }
+      
+    }
+    // end modem in order to make port listening for gps available
+    ssAkeru.end();
+  } else {
+    
+    Serial.print("No GPS data\n");
+  
+//    // Read DHT sensor
+//    float humi = dht.readHumidity();
+//    float temp = dht.readTemperature();
+//     
+//    // check if returns are valid, if they are NaN (not a number) then something went wrong!
+//    if (isnan(temp) || isnan(humi))
+//    {
+//        Serial.println("Failed to read from DHT");
+//    } 
+//    else 
+//    {
+//        Serial.print("Humidity: "); 
+//        Serial.print(humi);
+//        Serial.print(" %\t");
+//        Serial.print("Temperature: "); 
+//        Serial.print(temp);
+//        Serial.println(" *C");
+//    }
+//    
+//   delay(1000);
+   } 
 }
 
 /*
@@ -561,3 +681,4 @@ void serialEvent() {
     }
   }
 }
+

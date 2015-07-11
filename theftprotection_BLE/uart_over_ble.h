@@ -71,3 +71,4 @@ typedef struct
  */
 
 #endif // UART_OVER_BLE_H__
+
