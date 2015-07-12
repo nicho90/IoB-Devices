@@ -479,11 +479,10 @@ uint8_t stringIndex = 0;      //Initialize the index to store incoming chars
 // End of Bluetooth setup
 
 typedef struct {
-  int mode;
   bool theftprotection;
   float lat;
   float lng;
-  //float temperature;
+  int temperature;
 } Payload;
 
 void loop()
@@ -579,11 +578,10 @@ void loop()
 //        Serial.println(" *C");
 //    }
     
-    p.mode = 1;
     p.theftprotection = ftheftprotection;
     p.lat = flat;
     p.lng = flon;
-    //p.temperature = temp;
+    p.temperature = 0;
     
     // IF FLOAT is to long for SigFox-Message
     //int temp = (int) DHT.temperature;
