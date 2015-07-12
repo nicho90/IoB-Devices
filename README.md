@@ -15,4 +15,4 @@ When the bike is in use, the device should transmit collected data directly with
 Hardware used:
 * Snootlab Akeru beta 3.3 (Arduino UNO based device with TD1208 Sigfox modem)
 * RedBearLab.com Bluetooth Low Energy Shield
-* GPS shield
+* Grove GPS 1.1 shield 
