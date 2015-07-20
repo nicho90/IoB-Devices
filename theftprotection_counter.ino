@@ -103,12 +103,12 @@ void loop()
     Serial.print("No GPS data\n");
     Serial.print("LAT = 0.00000\n");
     Serial.print("LON = 0.00000\n");
-    DHT.read11(dht_dpin);
+
     Serial.print("Humidity = ");
-    Serial.print(DHT.humidity);
+
     Serial.print("%  ");
     Serial.print("temperature = ");
-    Serial.print(DHT.temperature);
+
     Serial.println("C\n");
 
     delay(1000);

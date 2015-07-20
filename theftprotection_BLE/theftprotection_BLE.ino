@@ -97,9 +97,9 @@ The ACI Evt Data Credit provides the radio level ack of a transmitted packet.
 */
 
 // Pin analog 0 for temp/humidity sensor
-//#define dht_dpin A0 
-//#define DHTTYPE DHT11
-//DHT dht(dht_dpin, DHTTYPE);
+#define dht_dpin A0 
+#define DHTTYPE DHT11
+DHT dht(dht_dpin, DHTTYPE);
 
 bool ftheftprotection = false;
 
@@ -339,10 +339,10 @@ void aci_loop()
                                             // Used to increase or decrease bandwidth
           timing_change_done = true;
 
-          char hello[]="Hello World, works";
+          char hello[]="Bluetooth works";
           uart_tx((uint8_t *)&hello[0], strlen(hello));
           Serial.print(F("Sending :"));
-          Serial.println(hello);
+          Serial.println("Bluetooth works");
         }
         break;
 
@@ -560,28 +560,30 @@ void loop()
     newData = false;
     
     // Read DHT sensor; temperature disabled right now
-    //float humi = dht.readHumidity();
-    //float temp = dht.readTemperature();
+    float humi = dht.readHumidity();
+    int temp = (int)dht.readTemperature();
     
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
-//    if (isnan(temp) || isnan(humi)) 
-//    {
-//        Serial.println("Failed to read from DHT");
-//    } 
-//    else 
-//    {
-//        Serial.print("Humidity: "); 
-//        Serial.print(humi);
-//        Serial.print(" %\t");
-//        Serial.print("Temperature: "); 
-//        Serial.print(temp);
-//        Serial.println(" *C");
-//    }
+    if (isnan(temp) || isnan(humi)) 
+    {
+        Serial.println("Failed to read from DHT");
+    } 
+    else 
+    {
+        Serial.print("Humidity: "); 
+        Serial.print(humi);
+        Serial.print(" %\t");
+        Serial.print("Temperature: "); 
+        Serial.print(temp);
+        Serial.println(" *C");
+    }
     
     p.theftprotection = ftheftprotection;
+    //check if flat is too short
     p.lat = flat;
+    //check if flon is too short
     p.lng = flon;
-    p.temperature = 0;
+    p.temperature = (int)temp;
     
     // IF FLOAT is to long for SigFox-Message
     //int temp = (int) DHT.temperature;
@@ -616,26 +618,28 @@ void loop()
     
     Serial.print("No GPS data\n");
   
-//    // Read DHT sensor
-//    float humi = dht.readHumidity();
-//    float temp = dht.readTemperature();
-//     
-//    // check if returns are valid, if they are NaN (not a number) then something went wrong!
-//    if (isnan(temp) || isnan(humi))
-//    {
-//        Serial.println("Failed to read from DHT");
-//    } 
-//    else 
-//    {
-//        Serial.print("Humidity: "); 
-//        Serial.print(humi);
-//        Serial.print(" %\t");
-//        Serial.print("Temperature: "); 
-//        Serial.print(temp);
-//        Serial.println(" *C");
-//    }
-//    
-//   delay(1000);
+    // Read DHT sensor
+    float humi = dht.readHumidity();
+    int temp = (int)dht.readTemperature();
+     
+    // check if returns are valid, if they are NaN (not a number) then something went wrong!
+    if (isnan(temp) || isnan(humi))
+    {
+        Serial.println("Failed to read from DHT");
+    } 
+    else 
+    {
+        Serial.print("Humidity: "); 
+        Serial.print(humi);
+        Serial.print(" %\t");
+        Serial.print("Temperature: "); 
+        Serial.print(temp);
+        Serial.println(" *C");
+        Serial.print("Theft protection: ");
+        Serial.println(ftheftprotection);
+    }
+    
+   delay(1000);
    } 
 }
 
