@@ -14,5 +14,7 @@ When the bike is in use, the device should transmit collected data directly with
 
 Hardware used:
 * Snootlab Akeru beta 3.3 (Arduino UNO based device with TD1208 Sigfox modem)
-* RedBearLab.com Bluetooth Low Energy Shield
-* Grove GPS 1.1 shield 
+* [RedBearLab.com Bluetooth Low Energy Shield v2.1](http://redbearlab.com/bleshield/)
+* [Seeed Studio Grove Base Shield 2.0](http://www.seeedstudio.com/wiki/Grove_-_Base_shield_v2)
+* [Seeed Studio Grove GPS 1.1](http://www.seeedstudio.com/wiki/Grove_-_GPS)
+* Seeed Studio Grove DHT11 v1.1 Temperature & Humidity Sensor
