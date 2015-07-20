@@ -579,17 +579,11 @@ void loop()
     }
     
     p.theftprotection = ftheftprotection;
-    //check if flat is too short
+    //TODO: check if flat is too short
     p.lat = flat;
-    //check if flon is too short
+    //TODO: check if flon is too short
     p.lng = flon;
     p.temperature = (int)temp;
-    
-    // IF FLOAT is to long for SigFox-Message
-    //int temp = (int) DHT.temperature;
-    //Serial.print("int temperature = ");
-    //Serial.print(temp); 
-    //Serial.println("C  ");
 
     // INIT MODEM
     Akeru.begin();
