@@ -18,3 +18,11 @@ Hardware used:
 * [Seeed Studio Grove Base Shield 2.0](http://www.seeedstudio.com/wiki/Grove_-_Base_shield_v2)
 * [Seeed Studio Grove GPS 1.1](http://www.seeedstudio.com/wiki/Grove_-_GPS)
 * Seeed Studio Grove DHT11 v1.1 Temperature & Humidity Sensor
+
+Required libraries:
+* [Akeru library](http://snoot.it/akerulib)
+* [TinyGPS library](https://github.com/mikalhart/TinyGPS/releases)
+* [NordicSemiconductor BLE SDK library](https://github.com/NordicSemiconductor/ble-sdk-arduino)
+* [Seeed Studio DHT library](https://github.com/Seeed-Studio/Grove_Temperature_And_Humidity_Sensor)
+
+Copy the extracted libraries into your ```~\Documents\Arduino\libraries```, make sure your folder names don't have any ```-``` or other non alphanumeric characters in them.
