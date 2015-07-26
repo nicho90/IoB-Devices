@@ -62,6 +62,10 @@ static hal_aci_evt_t  aci_data;
 */
 static bool timing_change_done = false;
 
+// ublox ubx messages to configure the gps receiver
+uint8_t gpsoff[] = { 0xB5, 0x62, 0x06, 0x04, 0x04, 0x00, 0x00, 0x00, 0x08, 0x00, 0x16, 0x74 };
+uint8_t gpson[] = { 0xB5, 0x62, 0x06, 0x04, 0x04, 0x00, 0x00, 0x00, 0x09, 0x00, 0x17, 0x76 };
+
 /*
   Used to test the UART TX characteristic notification
 */
@@ -113,7 +117,7 @@ SoftwareSerial ss(2,3);
 SoftwareSerial ssBluetooth(6,7);
 
 void setup(void)
-{  
+{
   Serial.begin(9600);
   Serial.println(F("Arduino setup"));
   Serial.println(F("Set line ending to newline to send data from the serial monitor"));
@@ -156,6 +160,15 @@ void setup(void)
   // then we initialize the data structures required to setup the nRF8001
   // The second parameter is for turning debug printing on for the ACI Commands and Events so they be printed on the Serial
   lib_aci_init(&aci_state, false);
+
+  // set the ublox 6 GPS receiver in power saving mode
+  ss.begin(9600);
+  delay(500);
+  uint8_t powersave[] = {0xB5, 0x62, 0x06, 0x11, 0x02, 0x00, 0x08, 0x01, 0x22, 0x92};
+  sendUBX(powersave, sizeof(powersave)/sizeof(uint8_t), ss);
+  delay(500);
+  ss.end();
+
   Serial.println(F("Setup done"));
 }
 
@@ -373,24 +386,30 @@ void aci_loop()
 
             Serial.print(F(" Data (Hex): "));
 
-            //Switch statement to parse app messages
+            // Switch statement to parse app messages
             switch(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]) {
               case 49:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Theft-Protection is on");
+                // theft protection on
                 ftheftprotection = true;
+                // turn GPS on
+                sendUBX(gpsoff, sizeof(gpsoff)/sizeof(uint8_t), ss);
                 break;
               case 48:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Theft-Protection is off");
+                // theft protection off
                 ftheftprotection = false;
+                // turn GPS on
+                sendUBX(gpson, sizeof(gpson)/sizeof(uint8_t), ss);
                 break;
               default:
                 Serial.println(aci_evt->params.data_received.rx_data.aci_data[aci_evt->len - 3]);
                 Serial.println("Last char unknown command");
             }
             
-            //Print message:          
+            // Print message:          
             
             for(int i=0; i<aci_evt->len - 2; i++)
             {
@@ -546,7 +565,7 @@ void loop()
     while (ss.available())
     {
       char c = ss.read();
-      //Serial.print(c); //uncomment to see the full NMEA datasets
+      //Serial.print(c); // uncomment to see the full NMEA datasets
       if (gps.encode(c)){ // Did a new valid sentence come in?
         newData = true;
       } 
@@ -554,6 +573,7 @@ void loop()
   }
 
   // end gps in order to make port listening for akeru available
+  // gps receiver will continue to get a fix or track gps satellites in the background
   ss.end();
     
   if (newData)
@@ -612,16 +632,14 @@ void loop()
         Serial.println(sizeof(p));
         Akeru.send(&p, sizeof(p)); // send payload to Sigfox network
         Serial.println("Message sent");
-        delay(10000);
       }
-      
     }
     // end modem in order to make port listening for gps available
     ssAkeru.end();
   } else {
     
     Serial.print("No GPS data\n");
-  
+    
     // Read DHT sensor
     float humi = dht.readHumidity();
     int temp = (int)dht.readTemperature();
@@ -629,22 +647,22 @@ void loop()
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(temp) || isnan(humi))
     {
-        Serial.println("Failed to read from DHT");
+      Serial.println("Failed to read from DHT");
     } 
     else 
     {
-        Serial.print("Humidity: "); 
-        Serial.print(humi);
-        Serial.print(" %\t");
-        Serial.print("Temperature: "); 
-        Serial.print(temp);
-        Serial.println(" *C");
-        Serial.print("Theft protection: ");
-        Serial.println(ftheftprotection);
+      Serial.print("Humidity: "); 
+      Serial.print(humi);
+      Serial.print(" %\t");
+      Serial.print("Temperature: "); 
+      Serial.print(temp);
+      Serial.println(" *C");
+      Serial.print("Theft protection: ");
+      Serial.println(ftheftprotection);
     }
-    
-    delay(10000);
-   } 
+  }
+
+  delay(2500); // wait 2.5 seconds to the next cycle
 }
 
 /*
@@ -688,3 +706,12 @@ void serialEvent() {
   }
 }
 
+// https://ukhas.org.uk/guides:ublox6
+// Send a byte array of UBX protocol to the GPS
+void sendUBX(uint8_t *MSG, uint8_t len, SoftwareSerial gpsserial) {
+  for(int i=0; i<len; i++) {
+    gpsserial.write(MSG[i]);
+    Serial.print(MSG[i], HEX);
+  }
+  gpsserial.println();
+}
