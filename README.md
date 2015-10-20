@@ -40,3 +40,8 @@ Required libraries:
 Copy the extracted libraries into a folder in your ```~\Documents\Arduino\libraries```, make sure your folder names don't have any ```-``` or other non alphanumeric characters in them or else the Arduino IDE will complain.
 
 Finally install the ```theftprotection_BLE\theftprotection_BLE.ino``` on your device.
+
+## Related repositories
+
+* Android app: See [aohrem/IoBApp](https://github.com/aohrem/IoBApp)
+* Server platform: See [mrunde/IoBikes-Platform](https://github.com/mrunde/IoBikes-Platform)
