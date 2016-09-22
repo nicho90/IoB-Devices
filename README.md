@@ -25,11 +25,11 @@ When the bike is in use, the device should transmit collected data directly with
 
 ### Contributors
 
-##### ![alt GitHub](http://i.imgur.com/0o48UoR.png") [Tobias Brüggentisch](https://github.com/TobiTobsen92)
-##### ![alt GitHub](http://i.imgur.com/0o48UoR.png") [Christoph Kisfeld](https://github.com/chk1)
-##### ![alt GitHub](http://i.imgur.com/0o48UoR.png") [Lukas Lohoff](https://github.com/LukasLohoff)
-##### ![alt GitHub](http://i.imgur.com/0o48UoR.png") [Nicholas Schiestel](https://github.com/nicho90)
-##### ![alt GitHub](http://i.imgur.com/0o48UoR.png") [René Unrau](https://github.com/ReneU)
+:octocat: [Tobias Brüggentisch](https://github.com/TobiTobsen92)<br>
+:octocat: [Christoph Kisfeld](https://github.com/chk1)<br>
+:octocat: [Lukas Lohoff](https://github.com/LukasLohoff)<br>
+:octocat: [Nicholas Schiestel](https://github.com/nicho90)<br>
+:octocat: [René Unrau](https://github.com/ReneU)<br>
 
 
 ### Hardware
